@@ -1,65 +1,241 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import { AppTab, Task, TimerMode, TimerState } from '@/types'
+import BrowserTabBar from '@/components/BrowserTabBar'
+import VisualizationTab from '@/components/VisualizationTab'
+import TasksTab from '@/components/TasksTab'
+import FocusModeModal from '@/components/FocusModeModal'
+import FocusModeTab from '@/components/FocusModeTab'
+import CreateTaskModal from '@/components/CreateTaskModal'
+import { useTasks } from '@/hooks/useTasks'
+
+// 초기 고정 탭
+const initialTabs: AppTab[] = [
+  {
+    id: 'visualization',
+    type: 'visualization',
+    title: '시각화',
+    isPinned: true,
+  },
+  {
+    id: 'tasks',
+    type: 'tasks',
+    title: '작업 관리',
+    isPinned: true,
+  },
+]
 
 export default function Home() {
+  const { tasks, addTask, isLoaded } = useTasks()
+  const [tabs, setTabs] = useState<AppTab[]>(initialTabs)
+  const [activeTabId, setActiveTabId] = useState('visualization')
+  const [isFocusModalOpen, setIsFocusModalOpen] = useState(false)
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
+  const [fullscreenTabId, setFullscreenTabId] = useState<string | null>(null)
+
+  // 활성 탭 가져오기
+  const activeTab = tabs.find(tab => tab.id === activeTabId)
+
+  // 집중 시작 핸들러
+  const handleStartFocus = () => {
+    setIsFocusModalOpen(true)
+  }
+
+  // 집중 모드 탭 생성
+  const handleFocusStart = (taskId: string, mode: TimerMode, duration?: number) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const newTabId = `focus-${Date.now()}`
+    const newTab: AppTab = {
+      id: newTabId,
+      type: 'focus',
+      title: task.title,
+      isPinned: false,
+      taskId,
+      timerState: {
+        isRunning: true,
+        mode,
+        startTime: Date.now(),
+        duration,
+        elapsedTime: 0,
+        taskId,
+      },
+    }
+
+    setTabs([...tabs, newTab])
+    setActiveTabId(newTabId)
+    setIsFocusModalOpen(false)
+  }
+
+  // 작업 생성
+  const handleCreateTask = () => {
+    setIsCreateTaskModalOpen(true)
+  }
+
+  const handleTaskCreate = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    addTask(taskData)
+  }
+
+  // 탭 닫기
+  const handleTabClose = (tabId: string) => {
+    const tab = tabs.find(t => t.id === tabId)
+    if (!tab || tab.isPinned) return
+
+    // 집중 모드 탭이고 타이머가 실행 중이면 확인
+    if (tab.type === 'focus' && tab.timerState?.isRunning) {
+      if (!confirm('진행 중인 타이머를 종료하시겠습니까?')) {
+        return
+      }
+    }
+
+    // 탭 제거
+    const newTabs = tabs.filter(t => t.id !== tabId)
+    setTabs(newTabs)
+
+    // 활성 탭이 닫히는 경우 첫 번째 탭으로 이동
+    if (activeTabId === tabId) {
+      setActiveTabId(newTabs[0]?.id || 'visualization')
+    }
+  }
+
+  // 집중 모드 탭 타이머 컨트롤
+  const updateTabTimerState = (tabId: string, updater: (prev: TimerState) => TimerState) => {
+    setTabs(prev => prev.map(tab => {
+      if (tab.id === tabId && tab.timerState) {
+        return {
+          ...tab,
+          timerState: updater(tab.timerState)
+        }
+      }
+      return tab
+    }))
+  }
+
+  const handleTimerPause = (tabId: string) => {
+    updateTabTimerState(tabId, prev => ({
+      ...prev,
+      isRunning: false,
+      elapsedTime: Date.now() - prev.startTime,
+    }))
+  }
+
+  const handleTimerResume = (tabId: string) => {
+    updateTabTimerState(tabId, prev => ({
+      ...prev,
+      isRunning: true,
+      startTime: Date.now() - prev.elapsedTime,
+    }))
+  }
+
+  const handleTimerStop = (tabId: string) => {
+    handleTabClose(tabId)
+  }
+
+  // 전체화면 토글
+  const handleToggleFullscreen = async (tabId: string) => {
+    if (fullscreenTabId === tabId) {
+      // 전체화면 종료
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      }
+      setFullscreenTabId(null)
+    } else {
+      // 전체화면 진입
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen()
+        setFullscreenTabId(tabId)
+      }
+    }
+  }
+
+  // 전체화면 변경 감지
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setFullscreenTabId(null)
+      }
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+
+  // 타이머 업데이트 (탭 제목에 시간 표시)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTabs(prev => prev.map(tab => {
+        if (tab.type === 'focus' && tab.timerState?.isRunning) {
+          return { ...tab }
+        }
+        return tab
+      }))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // 로딩 중일 때 표시
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="text-zinc-600 dark:text-zinc-400">Loading...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex flex-col h-screen bg-zinc-50 dark:bg-zinc-950">
+      {/* 브라우저 탭 바 (전체화면이 아닐 때만 표시) */}
+      {!fullscreenTabId && (
+        <BrowserTabBar
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onTabChange={setActiveTabId}
+          onTabClose={handleTabClose}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      )}
+
+      {/* 메인 컨텐츠 */}
+      <main className={`flex-1 overflow-hidden ${fullscreenTabId ? '' : 'pt-12'}`}>
+        {activeTab?.type === 'visualization' && (
+          <VisualizationTab tasks={tasks} onStartFocus={handleStartFocus} />
+        )}
+
+        {activeTab?.type === 'tasks' && (
+          <TasksTab tasks={tasks} onCreateTask={handleCreateTask} />
+        )}
+
+        {activeTab?.type === 'focus' && activeTab.timerState && (
+          <FocusModeTab
+            timerState={activeTab.timerState}
+            task={tasks.find(t => t.id === activeTab.taskId) || null}
+            onPause={() => handleTimerPause(activeTab.id)}
+            onResume={() => handleTimerResume(activeTab.id)}
+            onStop={() => handleTimerStop(activeTab.id)}
+            onToggleFullscreen={() => handleToggleFullscreen(activeTab.id)}
+            isFullscreen={fullscreenTabId === activeTab.id}
+          />
+        )}
       </main>
+
+      {/* 집중 모드 선택 모달 */}
+      <FocusModeModal
+        isOpen={isFocusModalOpen}
+        onClose={() => setIsFocusModalOpen(false)}
+        tasks={tasks}
+        onStart={handleFocusStart}
+      />
+
+      {/* 작업 생성 모달 */}
+      <CreateTaskModal
+        isOpen={isCreateTaskModalOpen}
+        onClose={() => setIsCreateTaskModalOpen(false)}
+        onCreate={handleTaskCreate}
+      />
     </div>
-  );
+  )
 }
