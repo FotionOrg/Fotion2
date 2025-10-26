@@ -27,8 +27,18 @@ export default function VisualizationTab({
           }`}
           title="시간별"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </button>
         <button
@@ -40,8 +50,18 @@ export default function VisualizationTab({
           }`}
           title="주간"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
         </button>
         <button
@@ -53,8 +73,18 @@ export default function VisualizationTab({
           }`}
           title="월별"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
           </svg>
         </button>
       </div>
@@ -260,9 +290,7 @@ function DailyView({ tasks }: { tasks: Task[] }) {
     <div ref={containerRef} className="overflow-auto h-full relative">
       {/* 헤더 + 주간 네비게이션 */}
       <div className="sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-30 pb-2 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold">
-          주간 일정
-        </h2>
+        <h2 className="text-lg font-semibold">주간 일정</h2>
         <div className="flex gap-1">
           <button
             onClick={goToCurrentWeek}
@@ -275,8 +303,18 @@ function DailyView({ tasks }: { tasks: Task[] }) {
             className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
             title="이전 주"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
           <button
@@ -284,8 +322,18 @@ function DailyView({ tasks }: { tasks: Task[] }) {
             className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
             title="다음 주"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </div>
@@ -293,7 +341,7 @@ function DailyView({ tasks }: { tasks: Task[] }) {
 
       <div className="inline-block min-w-full">
         {/* 요일 헤더 (sticky) */}
-        <div className="flex sticky top-[52px] bg-zinc-50 dark:bg-zinc-950 z-20 border-b-2 border-zinc-300 dark:border-zinc-700">
+        <div className="flex sticky top-[37px] bg-zinc-50 dark:bg-zinc-950 z-20 border-b-2 border-zinc-300 dark:border-zinc-700">
           <div className="w-16 flex-shrink-0" /> {/* 시간 칼럼 공간 */}
           {weekDays.map((day, index) => {
             const isToday = weekOffset === 0 && (index + 1) % 7 === currentDay;
@@ -341,7 +389,8 @@ function DailyView({ tasks }: { tasks: Task[] }) {
               {/* 각 요일 셀 */}
               {weekDays.map((_, dayIndex) => {
                 const cellTasks = getTasksForDayAndHour(dayIndex, hour);
-                const isToday = weekOffset === 0 && (dayIndex + 1) % 7 === currentDay;
+                const isToday =
+                  weekOffset === 0 && (dayIndex + 1) % 7 === currentDay;
                 const isCurrentCell = isToday && isCurrentHour;
 
                 return (
