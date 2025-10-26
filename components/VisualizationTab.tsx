@@ -20,25 +20,29 @@ export default function VisualizationTab({
   return (
     <div className="flex flex-col h-full">
       {/* 뷰 전환 탭 */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <ViewSwitchButton
-          active={currentView === 'hourly'}
-          onClick={() => setCurrentView('hourly')}
-          title="시간별"
-          icon={<ClockIcon />}
-        />
-        <ViewSwitchButton
-          active={currentView === 'daily'}
-          onClick={() => setCurrentView('daily')}
-          title="주간"
-          icon={<CalendarIcon />}
-        />
-        <ViewSwitchButton
-          active={currentView === 'monthly'}
-          onClick={() => setCurrentView('monthly')}
-          title="월별"
-          icon={<GridIcon />}
-        />
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="flex md:justify-start justify-stretch w-full md:w-auto">
+            <ViewSwitchButton
+              active={currentView === 'hourly'}
+              onClick={() => setCurrentView('hourly')}
+              title="시간별"
+              icon={<ClockIcon />}
+            />
+            <ViewSwitchButton
+              active={currentView === 'daily'}
+              onClick={() => setCurrentView('daily')}
+              title="주간"
+              icon={<CalendarIcon />}
+            />
+            <ViewSwitchButton
+              active={currentView === 'monthly'}
+              onClick={() => setCurrentView('monthly')}
+              title="월별"
+              icon={<GridIcon />}
+            />
+          </div>
+        </div>
       </div>
 
       {/* 뷰 내용 */}
@@ -84,7 +88,7 @@ function ViewSwitchButton({ active, onClick, title, icon }: ViewSwitchButtonProp
   return (
     <button
       onClick={onClick}
-      className={`flex-1 py-3 flex items-center justify-center transition-colors ${
+      className={`flex-1 md:flex-none md:w-24 py-3 flex items-center justify-center transition-colors ${
         active
           ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
           : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'

@@ -1,59 +1,59 @@
-'use client'
+"use client";
 
-import { Task } from '@/types'
-import { useState } from 'react'
+import { Task } from "@/types";
+import { useState } from "react";
 
 interface MonthlyViewProps {
-  tasks: Task[]
+  tasks: Task[];
 }
 
 export default function MonthlyView({ tasks }: MonthlyViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const today = new Date()
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const today = new Date();
 
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth()
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
 
   // 해당 월의 첫날과 마지막날
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
 
   // 캘린더 시작일 (이전 달 날짜 포함)
-  const startDay = new Date(firstDay)
-  startDay.setDate(startDay.getDate() - ((firstDay.getDay() + 6) % 7)) // 월요일부터 시작
+  const startDay = new Date(firstDay);
+  startDay.setDate(startDay.getDate() - ((firstDay.getDay() + 6) % 7)); // 월요일부터 시작
 
   // 6주치 날짜 생성
-  const calendarDays: Date[] = []
-  const currentDay = new Date(startDay)
+  const calendarDays: Date[] = [];
+  const currentDay = new Date(startDay);
   for (let i = 0; i < 42; i++) {
-    calendarDays.push(new Date(currentDay))
-    currentDay.setDate(currentDay.getDate() + 1)
+    calendarDays.push(new Date(currentDay));
+    currentDay.setDate(currentDay.getDate() + 1);
   }
 
   // 특정 날짜의 task 개수 계산
   const getTaskCountForDate = (date: Date) => {
-    const dateString = date.toDateString()
+    const dateString = date.toDateString();
     return tasks.filter((task) => {
-      if (!task.scheduledDate) return false
-      return new Date(task.scheduledDate).toDateString() === dateString
-    }).length
-  }
+      if (!task.scheduledDate) return false;
+      return new Date(task.scheduledDate).toDateString() === dateString;
+    }).length;
+  };
 
   // 이전/다음 달로 이동
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1))
-  }
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1))
-  }
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
 
   const goToToday = () => {
-    setCurrentDate(new Date())
-  }
+    setCurrentDate(new Date());
+  };
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto px-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
@@ -107,13 +107,13 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
 
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 gap-px bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800">
-        {['월', '화', '수', '목', '금', '토', '일'].map((day, index) => (
+        {["월", "화", "수", "목", "금", "토", "일"].map((day, index) => (
           <div
             key={day}
             className={`text-center py-2 text-sm font-semibold bg-zinc-50 dark:bg-zinc-900 ${
               index >= 5
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-zinc-700 dark:text-zinc-300'
+                ? "text-red-600 dark:text-red-400"
+                : "text-zinc-700 dark:text-zinc-300"
             }`}
           >
             {day}
@@ -124,26 +124,26 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
       {/* 날짜 그리드 */}
       <div className="grid grid-cols-7 gap-px bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800">
         {calendarDays.map((date, index) => {
-          const isCurrentMonth = date.getMonth() === month
-          const isToday = date.toDateString() === today.toDateString()
-          const isWeekend = date.getDay() === 0 || date.getDay() === 6
-          const taskCount = getTaskCountForDate(date)
+          const isCurrentMonth = date.getMonth() === month;
+          const isToday = date.toDateString() === today.toDateString();
+          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          const taskCount = getTaskCountForDate(date);
 
           return (
             <div
               key={index}
               className={`min-h-[80px] p-2 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer relative ${
-                !isCurrentMonth ? 'opacity-40' : ''
+                !isCurrentMonth ? "opacity-40" : ""
               }`}
             >
               {/* 날짜 숫자 */}
               <div
                 className={`text-sm font-medium ${
                   isToday
-                    ? 'flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full'
+                    ? "flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full"
                     : isWeekend
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-zinc-700 dark:text-zinc-300'
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-zinc-700 dark:text-zinc-300"
                 }`}
               >
                 {date.getDate()}
@@ -181,9 +181,9 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
                 />
               )}
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { AppTab } from '@/types'
+import Logo from './Logo'
 
 interface BrowserTabBarProps {
   tabs: AppTab[]
@@ -35,6 +36,12 @@ export default function BrowserTabBar({
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 z-50">
+      {/* 로고 - 절대 위치로 왼쪽 끝에 고정 */}
+      <div className="absolute left-4 top-0 bottom-0 flex items-center z-10">
+        <Logo className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+      </div>
+
+      {/* 탭들 - 원래대로 중앙 정렬 */}
       <div className="flex items-start overflow-x-auto max-w-screen-xl mx-auto">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId

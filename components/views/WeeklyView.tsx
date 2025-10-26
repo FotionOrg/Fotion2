@@ -64,7 +64,7 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
   const goToCurrentWeek = () => setWeekOffset(0);
 
   return (
-    <div ref={containerRef} className="overflow-auto h-full relative max-w-7xl mx-auto">
+    <div ref={containerRef} className="overflow-auto h-full relative max-w-7xl mx-auto px-4">
       {/* 헤더 + 주간 네비게이션 */}
       <div className="sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-30 pb-2 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-lg font-semibold">주간 일정</h2>
