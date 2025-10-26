@@ -35,14 +35,14 @@ export default function BrowserTabBar({
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-700 z-50">
-      {/* 로고 - 절대 위치로 왼쪽 끝에 고정 */}
-      <div className="absolute left-4 top-0 bottom-0 flex items-center z-10">
-        <Logo className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+    <div className="fixed top-0 left-0 right-0 bg-surface-secondary dark:bg-surface border-b border-zinc-200 dark:border-zinc-800 z-50">
+      {/* 로고 - 절대 위치로 왼쪽 끝에 고정, 모바일에서는 숨김 */}
+      <div className="absolute left-4 top-0 bottom-0 md:flex items-center z-10 hidden">
+        <Logo className="w-7 h-7" />
       </div>
 
-      {/* 탭들 - 원래대로 중앙 정렬 */}
-      <div className="flex items-start overflow-x-auto max-w-screen-xl mx-auto">
+      {/* 탭들 - 모바일에서는 패딩 없음, PC에서는 왼쪽 패딩 */}
+      <div className="flex items-start overflow-x-auto max-w-screen-xl mx-auto md:pl-16">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId
 
@@ -52,10 +52,10 @@ export default function BrowserTabBar({
               onClick={() => onTabChange(tab.id)}
               className={`
                 relative flex items-center gap-2 px-4 py-2.5 min-w-[120px] max-w-[200px]
-                transition-all border-r border-zinc-300 dark:border-zinc-700 cursor-pointer
+                transition-all border-r border-zinc-200 dark:border-zinc-800 cursor-pointer
                 ${isActive
-                  ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 border-b-2 border-b-blue-500'
-                  : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-250 dark:hover:bg-zinc-750'
+                  ? 'bg-background dark:bg-background text-foreground dark:text-foreground border-b-2 border-b-primary-500'
+                  : 'bg-surface-secondary dark:bg-surface-secondary text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 }
               `}
             >

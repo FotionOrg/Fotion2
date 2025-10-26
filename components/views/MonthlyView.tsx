@@ -1,13 +1,13 @@
 "use client";
 
-import { Task } from "@/types";
+import { FocusSession } from "@/types";
 import { useState } from "react";
 
 interface MonthlyViewProps {
-  tasks: Task[];
+  sessions: FocusSession[];
 }
 
-export default function MonthlyView({ tasks }: MonthlyViewProps) {
+export default function MonthlyView({ sessions }: MonthlyViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const today = new Date();
 
@@ -30,12 +30,11 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
     currentDay.setDate(currentDay.getDate() + 1);
   }
 
-  // 특정 날짜의 task 개수 계산
-  const getTaskCountForDate = (date: Date) => {
+  // 특정 날짜의 세션 개수 계산
+  const getSessionCountForDate = (date: Date) => {
     const dateString = date.toDateString();
-    return tasks.filter((task) => {
-      if (!task.scheduledDate) return false;
-      return new Date(task.scheduledDate).toDateString() === dateString;
+    return sessions.filter((session) => {
+      return session.startTime.toDateString() === dateString;
     }).length;
   };
 
@@ -53,7 +52,7 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto px-4">
+    <div className="space-y-4 max-w-6xl mx-auto px-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
@@ -110,7 +109,7 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
         {["월", "화", "수", "목", "금", "토", "일"].map((day, index) => (
           <div
             key={day}
-            className={`text-center py-2 text-sm font-semibold bg-zinc-50 dark:bg-zinc-900 ${
+            className={`text-center py-2 text-sm font-semibold bg-surface dark:bg-surface ${
               index >= 5
                 ? "text-red-600 dark:text-red-400"
                 : "text-zinc-700 dark:text-zinc-300"
@@ -127,12 +126,12 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
           const isCurrentMonth = date.getMonth() === month;
           const isToday = date.toDateString() === today.toDateString();
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-          const taskCount = getTaskCountForDate(date);
+          const sessionCount = getSessionCountForDate(date);
 
           return (
             <div
               key={index}
-              className={`min-h-[80px] p-2 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer relative ${
+              className={`min-h-[80px] p-2 bg-surface dark:bg-surface hover:bg-surface-secondary dark:hover:bg-surface-secondary transition-colors cursor-pointer relative ${
                 !isCurrentMonth ? "opacity-40" : ""
               }`}
             >
@@ -140,7 +139,7 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
               <div
                 className={`text-sm font-medium ${
                   isToday
-                    ? "flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full"
+                    ? "flex items-center justify-center w-7 h-7 bg-primary-600 text-white rounded-full"
                     : isWeekend
                     ? "text-red-600 dark:text-red-400"
                     : "text-zinc-700 dark:text-zinc-300"
@@ -149,34 +148,34 @@ export default function MonthlyView({ tasks }: MonthlyViewProps) {
                 {date.getDate()}
               </div>
 
-              {/* Task 표시 */}
-              {taskCount > 0 && (
+              {/* Session 표시 */}
+              {sessionCount > 0 && (
                 <div className="mt-1">
-                  {taskCount <= 3 ? (
+                  {sessionCount <= 3 ? (
                     // 3개 이하: 점으로 표시
                     <div className="flex gap-1">
-                      {Array.from({ length: taskCount }).map((_, i) => (
+                      {Array.from({ length: sessionCount }).map((_, i) => (
                         <div
                           key={i}
-                          className="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full"
+                          className="w-1.5 h-1.5 bg-primary-500 dark:bg-primary-400 rounded-full"
                         />
                       ))}
                     </div>
                   ) : (
                     // 4개 이상: 숫자로 표시
-                    <div className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded">
-                      {taskCount}
+                    <div className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded">
+                      {sessionCount}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Task 밀도에 따른 배경 색상 */}
-              {taskCount > 0 && (
+              {/* Session 밀도에 따른 배경 색상 */}
+              {sessionCount > 0 && (
                 <div
-                  className="absolute inset-0 bg-blue-500 dark:bg-blue-600 pointer-events-none"
+                  className="absolute inset-0 bg-primary-500 dark:bg-primary-600 pointer-events-none"
                   style={{
-                    opacity: Math.min(taskCount * 0.05, 0.2),
+                    opacity: Math.min(sessionCount * 0.05, 0.2),
                   }}
                 />
               )}

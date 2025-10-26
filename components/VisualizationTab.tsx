@@ -1,18 +1,18 @@
 'use client'
 
-import { VisualizationView, Task } from '@/types'
+import { VisualizationView, FocusSession } from '@/types'
 import { useState } from 'react'
 import HourlyView from './views/HourlyView'
 import WeeklyView from './views/WeeklyView'
 import MonthlyView from './views/MonthlyView'
 
 interface VisualizationTabProps {
-  tasks: Task[]
+  sessions: FocusSession[]
   onStartFocus: () => void
 }
 
 export default function VisualizationTab({
-  tasks,
+  sessions,
   onStartFocus,
 }: VisualizationTabProps) {
   const [currentView, setCurrentView] = useState<VisualizationView>('hourly')
@@ -20,7 +20,7 @@ export default function VisualizationTab({
   return (
     <div className="flex flex-col h-full">
       {/* 뷰 전환 탭 */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-surface dark:bg-surface">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex md:justify-start justify-stretch w-full md:w-auto">
             <ViewSwitchButton
@@ -47,15 +47,15 @@ export default function VisualizationTab({
 
       {/* 뷰 내용 */}
       <div className="flex-1 overflow-auto p-4">
-        {currentView === 'hourly' && <HourlyView tasks={tasks} />}
-        {currentView === 'daily' && <WeeklyView tasks={tasks} />}
-        {currentView === 'monthly' && <MonthlyView tasks={tasks} />}
+        {currentView === 'hourly' && <HourlyView sessions={sessions} />}
+        {currentView === 'daily' && <WeeklyView sessions={sessions} />}
+        {currentView === 'monthly' && <MonthlyView sessions={sessions} />}
       </div>
 
       {/* 집중 시작 FAB */}
       <button
         onClick={onStartFocus}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-blue-600 dark:bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center z-40"
+        className="fixed bottom-20 right-4 w-14 h-14 bg-primary-600 dark:bg-primary-500 text-white rounded-full shadow-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors flex items-center justify-center z-40"
         title="집중 모드 시작"
       >
         <svg
@@ -90,7 +90,7 @@ function ViewSwitchButton({ active, onClick, title, icon }: ViewSwitchButtonProp
       onClick={onClick}
       className={`flex-1 md:flex-none md:w-24 py-3 flex items-center justify-center transition-colors ${
         active
-          ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+          ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
           : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
       }`}
       title={title}

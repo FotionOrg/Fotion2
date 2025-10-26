@@ -15,6 +15,7 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('')
+  const [estimatedDuration, setEstimatedDuration] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
@@ -28,6 +29,7 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
       setPriority('medium')
       setScheduledDate('')
       setScheduledTime('')
+      setEstimatedDuration('')
       setTags([])
       setTagInput('')
 
@@ -81,6 +83,7 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
       source: 'internal',
       scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
       scheduledTime: scheduledTime || undefined,
+      estimatedDuration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
     }
 
     onCreate(newTask)
@@ -146,7 +149,7 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
           {/* 날짜/시간 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">날짜</label>
+              <label className="block text-sm font-medium mb-2">날짜 (선택)</label>
               <input
                 type="date"
                 value={scheduledDate}
@@ -155,7 +158,7 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">시간</label>
+              <label className="block text-sm font-medium mb-2">시간 (선택)</label>
               <input
                 type="time"
                 value={scheduledTime}
@@ -163,6 +166,22 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTas
                 className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          {/* 예상 소요 시간 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">예상 소요 시간 (분, 선택)</label>
+            <input
+              type="number"
+              min="1"
+              value={estimatedDuration}
+              onChange={(e) => setEstimatedDuration(e.target.value)}
+              placeholder="예: 25, 50"
+              className="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              집중 모드에서 타이머 목표 시간으로 사용됩니다
+            </p>
           </div>
 
           {/* 우선순위 */}

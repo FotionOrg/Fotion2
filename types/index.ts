@@ -1,4 +1,4 @@
-// Task 관련 타입
+// Task 관련 타입 (할 일 목록)
 export interface Task {
   id: string
   title: string
@@ -6,12 +6,12 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'completed'
   priority?: 'low' | 'medium' | 'high'
   tags?: string[]
-  source: 'internal' | 'notion' | 'todoist' // 작업 출처
+  source: 'internal' | 'notion' | 'todoist' | 'linear' // 작업 출처
+  estimatedDuration?: number // 예상 소요 시간 (분)
 
-  // 시간 관련
-  scheduledDate?: Date
+  // 일정 (외부 연동에서 가져올 수 있음)
+  scheduledDate?: Date // 시작일 또는 종료일
   scheduledTime?: string // "09:00" 형식
-  duration?: number // 예상 소요 시간 (분)
 
   // 메타데이터
   createdAt: Date
@@ -28,16 +28,20 @@ export interface TimerState {
   duration?: number // 타이머 모드일 때 목표 시간 (밀리초)
   elapsedTime: number // 경과 시간 (밀리초)
   taskId?: string // 현재 집중하고 있는 task
+  sessionId?: string // FocusSession ID
 }
 
-// 집중 세션 기록
+// 집중 세션 기록 (시각화 탭에 표시되는 데이터)
 export interface FocusSession {
   id: string
   taskId: string
-  startTime: Date
-  endTime?: Date
+  taskTitle: string // Task 제목 스냅샷 (Task 삭제되어도 기록 유지)
+  startTime: Date // 집중 시작 시간
+  endTime?: Date // 집중 종료 시간
   duration: number // 실제 집중한 시간 (밀리초)
-  completed: boolean // 타이머 완료 여부
+  completed: boolean // 타이머 완료 여부 (중간에 멈추면 false)
+  mode: TimerMode // 타이머 or 스톱워치
+  targetDuration?: number // 타이머 모드일 때 목표 시간 (밀리초)
 }
 
 // 탭 관련 타입

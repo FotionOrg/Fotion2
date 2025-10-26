@@ -1,13 +1,13 @@
 "use client";
 
-import { Task } from "@/types";
+import { FocusSession } from "@/types";
 import { useState, useRef, useEffect } from "react";
 
 interface WeeklyViewProps {
-  tasks: Task[];
+  sessions: FocusSession[];
 }
 
-export default function WeeklyView({ tasks }: WeeklyViewProps) {
+export default function WeeklyView({ sessions }: WeeklyViewProps) {
   const now = new Date();
   const currentDay = now.getDay(); // 0 (일) ~ 6 (토)
   const currentHour = now.getHours();
@@ -31,14 +31,13 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
     return date;
   });
 
-  // 요일/시간별 task 그룹핑
-  const getTasksForDayAndHour = (dayIndex: number, hour: number) => {
+  // 요일/시간별 세션 그룹핑
+  const getSessionsForDayAndHour = (dayIndex: number, hour: number) => {
     const targetDate = weekDates[dayIndex].toDateString();
-    return tasks.filter((task) => {
-      if (!task.scheduledDate || !task.scheduledTime) return false;
-      const taskDate = new Date(task.scheduledDate).toDateString();
-      const taskHour = parseInt(task.scheduledTime.split(":")[0]);
-      return taskDate === targetDate && taskHour === hour;
+    return sessions.filter((session) => {
+      const sessionDate = session.startTime.toDateString();
+      const sessionHour = session.startTime.getHours();
+      return sessionDate === targetDate && sessionHour === hour;
     });
   };
 
@@ -66,7 +65,7 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
   return (
     <div ref={containerRef} className="overflow-auto h-full relative max-w-7xl mx-auto px-4">
       {/* 헤더 + 주간 네비게이션 */}
-      <div className="sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-30 pb-2 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+      <div className="sticky top-0 bg-background dark:bg-background z-30 pb-2 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-lg font-semibold">주간 일정</h2>
         <div className="flex gap-1">
           <button
@@ -118,7 +117,7 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
 
       <div className="inline-block min-w-full">
         {/* 요일 헤더 (sticky) */}
-        <div className="flex sticky top-[37px] bg-zinc-50 dark:bg-zinc-950 z-20 border-b-2 border-zinc-300 dark:border-zinc-700">
+        <div className="flex sticky top-[37px] bg-background dark:bg-background z-20 border-b-2 border-zinc-300 dark:border-zinc-700">
           <div className="w-16 flex-shrink-0" /> {/* 시간 칼럼 공간 */}
           {weekDays.map((day, index) => {
             const isToday = weekOffset === 0 && (index + 1) % 7 === currentDay;
@@ -127,7 +126,7 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
                 key={day}
                 className={`flex-1 min-w-[100px] text-center py-2 font-semibold ${
                   isToday
-                    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30"
+                    ? "text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/30"
                     : "text-zinc-700 dark:text-zinc-300"
                 }`}
               >
@@ -149,14 +148,14 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
               key={hour}
               ref={isCurrentHour ? currentHourRef : null}
               className={`flex border-b border-zinc-200 dark:border-zinc-800 ${
-                isCurrentHour ? "bg-blue-50/30 dark:bg-blue-950/20" : ""
+                isCurrentHour ? "bg-primary-50/30 dark:bg-primary-950/20" : ""
               }`}
             >
               {/* 시간 */}
               <div
                 className={`w-16 flex-shrink-0 py-2 px-2 text-xs text-center font-mono ${
                   isCurrentHour
-                    ? "text-blue-600 dark:text-blue-400 font-semibold"
+                    ? "text-primary-600 dark:text-primary-400 font-semibold"
                     : "text-zinc-500 dark:text-zinc-400"
                 }`}
               >
@@ -165,7 +164,7 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
 
               {/* 각 요일 셀 */}
               {weekDays.map((_, dayIndex) => {
-                const cellTasks = getTasksForDayAndHour(dayIndex, hour);
+                const cellSessions = getSessionsForDayAndHour(dayIndex, hour);
                 const isToday =
                   weekOffset === 0 && (dayIndex + 1) % 7 === currentDay;
                 const isCurrentCell = isToday && isCurrentHour;
@@ -174,32 +173,26 @@ export default function WeeklyView({ tasks }: WeeklyViewProps) {
                   <div
                     key={dayIndex}
                     className={`flex-1 min-w-[100px] p-1 min-h-[60px] relative ${
-                      isToday ? "bg-blue-50/20 dark:bg-blue-950/10" : ""
+                      isToday ? "bg-primary-50/20 dark:bg-primary-950/10" : ""
                     }`}
                   >
                     {/* 현재 시간 표시 */}
                     {isCurrentCell && (
-                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-500 dark:bg-blue-400 z-10">
-                        <div className="absolute -left-1 -top-1 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full" />
+                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-primary-500 dark:bg-primary-400 z-10">
+                        <div className="absolute -left-1 -top-1 w-2 h-2 bg-primary-500 dark:bg-primary-400 rounded-full" />
                       </div>
                     )}
 
-                    {cellTasks.map((task) => {
-                      const isFocusing = task.status === "in_progress";
+                    {cellSessions.map((session) => {
+                      const durationMinutes = Math.round(session.duration / 60000);
                       return (
                         <div
-                          key={task.id}
-                          className={`text-xs p-1 mb-1 rounded truncate ${
-                            isFocusing
-                              ? "bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700"
-                              : "bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700"
-                          }`}
-                          title={task.title}
+                          key={session.id}
+                          className="text-xs p-1 mb-1 rounded truncate bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700"
+                          title={`${session.taskTitle}${session.endTime ? ` (${durationMinutes}분)` : ''}`}
                         >
-                          {isFocusing && (
-                            <span className="inline-block w-1.5 h-1.5 bg-green-500 rounded-full mr-1 animate-pulse" />
-                          )}
-                          {task.title}
+                          <span className="inline-block w-1.5 h-1.5 bg-primary-500 rounded-full mr-1" />
+                          {session.taskTitle}
                         </div>
                       );
                     })}

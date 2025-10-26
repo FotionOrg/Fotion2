@@ -233,6 +233,7 @@ function TaskItem({ task, isSelected, onSelect }: { task: Task; isSelected: bool
     internal: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
     notion: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
     todoist: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
+    linear: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400',
   }
 
   return (
@@ -247,12 +248,20 @@ function TaskItem({ task, isSelected, onSelect }: { task: Task; isSelected: bool
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm truncate">{task.title}</h3>
-          {task.scheduledTime && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{task.scheduledTime}</p>
-          )}
+          <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            {task.scheduledTime && (
+              <span>🕐 {task.scheduledTime}</span>
+            )}
+            {task.estimatedDuration && (
+              <span>⏱ {task.estimatedDuration}분</span>
+            )}
+          </div>
         </div>
         <span className={`px-2 py-0.5 text-xs rounded whitespace-nowrap ${sourceColors[task.source]}`}>
-          {task.source === 'internal' ? '내부' : task.source}
+          {task.source === 'internal' ? '내부' :
+           task.source === 'notion' ? 'Notion' :
+           task.source === 'linear' ? 'Linear' :
+           task.source === 'todoist' ? 'Todoist' : task.source}
         </span>
       </div>
     </button>

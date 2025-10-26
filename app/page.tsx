@@ -9,6 +9,7 @@ import FocusModeModal from '@/components/FocusModeModal'
 import FocusModeTab from '@/components/FocusModeTab'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import { useTasks } from '@/hooks/useTasks'
+import { useFocusSessions } from '@/hooks/useFocusSessions'
 
 // 초기 고정 탭
 const initialTabs: AppTab[] = [
@@ -27,7 +28,9 @@ const initialTabs: AppTab[] = [
 ]
 
 export default function Home() {
-  const { tasks, addTask, isLoaded } = useTasks()
+  const { tasks, addTask, isLoaded: tasksLoaded } = useTasks()
+  const { sessions, startSession, endSession, isLoaded: sessionsLoaded } = useFocusSessions()
+  const isLoaded = tasksLoaded && sessionsLoaded
   const [tabs, setTabs] = useState<AppTab[]>(initialTabs)
   const [activeTabId, setActiveTabId] = useState('visualization')
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false)
@@ -47,6 +50,9 @@ export default function Home() {
     const task = tasks.find(t => t.id === taskId)
     if (!task) return
 
+    // FocusSession 시작
+    const session = startSession(taskId, task.title, mode, duration)
+
     const newTabId = `focus-${Date.now()}`
     const newTab: AppTab = {
       id: newTabId,
@@ -61,6 +67,7 @@ export default function Home() {
         duration,
         elapsedTime: 0,
         taskId,
+        sessionId: session.id, // FocusSession ID 저장
       },
     }
 
@@ -88,6 +95,16 @@ export default function Home() {
       if (!confirm('진행 중인 타이머를 종료하시겠습니까?')) {
         return
       }
+    }
+
+    // 집중 모드 탭인 경우 FocusSession 종료
+    if (tab.type === 'focus' && tab.timerState?.sessionId) {
+      // 타이머가 완료된 경우인지 확인
+      const isCompleted = tab.timerState.mode === 'timer' &&
+        tab.timerState.duration &&
+        (Date.now() - tab.timerState.startTime) >= tab.timerState.duration
+
+      endSession(tab.timerState.sessionId, isCompleted)
     }
 
     // 탭 제거
@@ -181,14 +198,14 @@ export default function Home() {
   // 로딩 중일 때 표시
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex items-center justify-center h-screen" style={{ backgroundColor: 'var(--background)' }}>
         <div className="text-zinc-600 dark:text-zinc-400">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--background)' }}>
       {/* 브라우저 탭 바 (전체화면이 아닐 때만 표시) */}
       {!fullscreenTabId && (
         <BrowserTabBar
@@ -202,7 +219,7 @@ export default function Home() {
       {/* 메인 컨텐츠 */}
       <main className={`flex-1 overflow-hidden ${fullscreenTabId ? '' : 'pt-12'}`}>
         {activeTab?.type === 'visualization' && (
-          <VisualizationTab tasks={tasks} onStartFocus={handleStartFocus} />
+          <VisualizationTab sessions={sessions} onStartFocus={handleStartFocus} />
         )}
 
         {activeTab?.type === 'tasks' && (

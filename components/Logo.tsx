@@ -1,4 +1,4 @@
-export default function Logo({ className = "w-8 h-8" }: { className?: string }) {
+export default function Logo({ className = "w-8 h-8 text-primary-600 dark:text-primary-400" }: { className?: string }) {
   return (
     <svg
       className={className}
