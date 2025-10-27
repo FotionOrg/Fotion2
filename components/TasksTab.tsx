@@ -2,6 +2,7 @@
 
 import { memo } from 'react'
 import { Task } from '@/types'
+import GoogleCalendarSync from './GoogleCalendarSync'
 
 interface TasksTabProps {
   tasks: Task[]
@@ -71,9 +72,12 @@ function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
 
       {/* 우측: 미분류 작업 (Backlog) - 모바일에서는 하단, PC에서는 우측 */}
       <div className="w-full md:w-96 border-t md:border-t-0 border-zinc-200 dark:border-zinc-800 overflow-auto bg-surface dark:bg-surface">
-        <div className="p-4">
-          <h2 className="text-lg font-semibold mb-4">미분류 작업</h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+        <div className="p-4 space-y-4">
+          {/* Google Calendar 연동 */}
+          <GoogleCalendarSync />
+
+          <h2 className="text-lg font-semibold">미분류 작업</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 -mt-2">
             외부 연동에서 날짜가 없거나 아직 일정을 정하지 않은 작업
           </p>
           <div className="space-y-2">
@@ -119,6 +123,7 @@ function TaskCard({ task, showDateTime = false }: TaskCardProps) {
     notion: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
     todoist: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
     linear: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400',
+    'google-calendar': 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
   }
 
   const statusColors = {

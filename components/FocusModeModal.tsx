@@ -234,6 +234,7 @@ function TaskItem({ task, isSelected, onSelect }: { task: Task; isSelected: bool
     notion: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
     todoist: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
     linear: 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400',
+    'google-calendar': 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
   }
 
   return (
