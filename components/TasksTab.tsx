@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Task } from '@/types'
-import GoogleCalendarSync from './GoogleCalendarSync'
+import IntegrationsHub from './IntegrationsHub'
 
 interface TasksTabProps {
   tasks: Task[]
@@ -38,13 +38,13 @@ function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
 
   return (
     <div className="flex flex-col md:flex-row h-full">
-      {/* 좌측: 캘린더 + 시간대별 작업 */}
-      <div className="flex-1 md:border-r border-zinc-200 dark:border-zinc-800 overflow-auto">
-        <div className="p-4">
+      {/* 좌측: 예정된 작업 */}
+      <div className="flex-1 md:border-r border-b md:border-b-0 border-zinc-200 dark:border-zinc-800 overflow-auto">
+        <div className="p-4 h-full flex flex-col">
           <h2 className="text-lg font-semibold mb-4">예정된 작업</h2>
 
           {/* 현재 날짜 표시 */}
-          <div className="mb-4 p-3 bg-surface-secondary dark:bg-surface-secondary rounded-lg">
+          <div className="mb-4 p-3 bg-surface-secondary dark:bg-surface-secondary rounded-lg flex-shrink-0">
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
               {new Date().toLocaleDateString('ko-KR', {
                 year: 'numeric',
@@ -55,8 +55,8 @@ function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
             </div>
           </div>
 
-          {/* 시간대별 작업 */}
-          <div className="space-y-2">
+          {/* 시간대별 작업 - 스크롤 가능 */}
+          <div className="space-y-2 flex-1 overflow-auto">
             {scheduledTasks.length > 0 ? (
               scheduledTasks.map(task => (
                 <TaskCard key={task.id} task={task} showDateTime />
@@ -70,17 +70,18 @@ function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
         </div>
       </div>
 
-      {/* 우측: 미분류 작업 (Backlog) - 모바일에서는 하단, PC에서는 우측 */}
-      <div className="w-full md:w-96 border-t md:border-t-0 border-zinc-200 dark:border-zinc-800 overflow-auto bg-surface dark:bg-surface">
-        <div className="p-4 space-y-4">
-          {/* Google Calendar 연동 */}
-          <GoogleCalendarSync />
+      {/* 중앙: 미분류 작업 (Backlog) */}
+      <div className="w-full md:w-80 md:border-r border-b md:border-b-0 border-zinc-200 dark:border-zinc-800 overflow-auto bg-surface dark:bg-surface">
+        <div className="p-4 h-full flex flex-col">
+          <div className="flex-shrink-0 mb-4">
+            <h2 className="text-lg font-semibold">미분류 작업</h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              외부 연동에서 날짜가 없거나 아직 일정을 정하지 않은 작업
+            </p>
+          </div>
 
-          <h2 className="text-lg font-semibold">미분류 작업</h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 -mt-2">
-            외부 연동에서 날짜가 없거나 아직 일정을 정하지 않은 작업
-          </p>
-          <div className="space-y-2">
+          {/* 미분류 작업 목록 - 스크롤 가능 */}
+          <div className="space-y-2 flex-1 overflow-auto">
             {unscheduledTasks.length > 0 ? (
               unscheduledTasks.map(task => (
                 <TaskCard key={task.id} task={task} showDateTime={false} />
@@ -91,6 +92,13 @@ function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 우측: 외부 연동 허브 */}
+      <div className="w-full md:w-[500px] overflow-auto bg-zinc-50 dark:bg-zinc-900">
+        <div className="p-4 h-full overflow-auto">
+          <IntegrationsHub />
         </div>
       </div>
 
