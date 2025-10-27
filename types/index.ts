@@ -37,9 +37,9 @@ export interface FocusSession {
   taskId: string
   taskTitle: string // Task 제목 스냅샷 (Task 삭제되어도 기록 유지)
   startTime: Date // 집중 시작 시간
-  endTime?: Date // 집중 종료 시간
+  endTime: Date | null // 집중 종료 시간
   duration: number // 실제 집중한 시간 (밀리초)
-  completed: boolean // 타이머 완료 여부 (중간에 멈추면 false)
+  isCompleted: boolean // 타이머 완료 여부 (중간에 멈추면 false)
   mode: TimerMode // 타이머 or 스톱워치
   targetDuration?: number // 타이머 모드일 때 목표 시간 (밀리초)
 }

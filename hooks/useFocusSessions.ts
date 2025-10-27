@@ -1,110 +1,177 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { FocusSession } from '@/types'
-
-const STORAGE_KEY = 'fotion2_focus_sessions'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { FocusSession, TimerMode } from '@/types'
+import {
+  getSessionsAction,
+  createSessionAction,
+  endSessionAction,
+  deleteSessionAction,
+} from '@/app/actions/sessions'
 
 /**
- * FocusSession을 LocalStorage에서 관리하는 custom hook
- * 실제로 집중 모드로 작업한 기록을 저장/조회
+ * React Query를 사용하는 FocusSessions hook
+ * - 자동 캐싱 및 refetching
+ * - Optimistic updates
+ * - 캐시 무효화
  */
 export function useFocusSessions() {
-  const [sessions, setSessions] = useState<FocusSession[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+  const queryClient = useQueryClient()
 
-  // 초기 로드: LocalStorage에서 데이터 읽기
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsedSessions = JSON.parse(stored, (key, value) => {
-          // Date 객체 복원
-          if (key === 'startTime' || key === 'endTime') {
-            return value ? new Date(value) : undefined
-          }
-          return value
-        })
-        setSessions(parsedSessions)
-      } else {
-        // 저장된 데이터가 없으면 빈 배열로 시작
-        setSessions([])
-      }
-    } catch (error) {
-      console.error('Failed to load focus sessions from localStorage:', error)
-      setSessions([])
-    } finally {
-      setIsLoaded(true)
-    }
-  }, [])
+  // Sessions 조회 (자동 캐싱)
+  const {
+    data: sessions = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: getSessionsAction,
+  })
 
-  // sessions 변경 시 자동으로 LocalStorage에 저장
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
-      } catch (error) {
-        console.error('Failed to save focus sessions to localStorage:', error)
-      }
-    }
-  }, [sessions, isLoaded])
-
-  // FocusSession 추가 (집중 모드 시작)
-  const startSession = (
-    taskId: string,
-    taskTitle: string,
-    mode: 'timer' | 'stopwatch',
-    targetDuration?: number
-  ): FocusSession => {
-    const newSession: FocusSession = {
-      id: Date.now().toString(),
+  // Session 생성 (집중 모드 시작)
+  const createMutation = useMutation({
+    mutationFn: ({
       taskId,
       taskTitle,
-      startTime: new Date(),
-      duration: 0,
-      completed: false,
       mode,
       targetDuration,
-    }
-    setSessions(prev => [...prev, newSession])
-    return newSession
-  }
+    }: {
+      taskId: string
+      taskTitle: string
+      mode: TimerMode
+      targetDuration?: number
+    }) => createSessionAction(taskId, taskTitle, mode, targetDuration),
+    onMutate: async ({ taskId, taskTitle, mode, targetDuration }) => {
+      await queryClient.cancelQueries({ queryKey: ['sessions'] })
 
-  // FocusSession 종료
-  const endSession = (sessionId: string, completed: boolean = false) => {
-    setSessions(prev =>
-      prev.map(session => {
-        if (session.id === sessionId && !session.endTime) {
-          const endTime = new Date()
-          const duration = endTime.getTime() - session.startTime.getTime()
-          return {
-            ...session,
-            endTime,
-            duration,
-            completed,
+      const previousSessions = queryClient.getQueryData<FocusSession[]>(['sessions'])
+
+      // Optimistic update
+      const optimisticSession: FocusSession = {
+        id: `temp-session-${Date.now()}`,
+        taskId,
+        taskTitle,
+        startTime: new Date(),
+        endTime: null,
+        duration: 0,
+        isCompleted: false,
+        mode,
+        targetDuration,
+      }
+
+      queryClient.setQueryData<FocusSession[]>(['sessions'], (old = []) => [
+        ...old,
+        optimisticSession,
+      ])
+
+      return { previousSessions }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['sessions'], context.previousSessions)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+    },
+  })
+
+  // Session 종료
+  const endMutation = useMutation({
+    mutationFn: ({
+      sessionId,
+      isCompleted,
+    }: {
+      sessionId: string
+      isCompleted: boolean
+    }) => endSessionAction(sessionId, isCompleted),
+    onMutate: async ({ sessionId, isCompleted }) => {
+      await queryClient.cancelQueries({ queryKey: ['sessions'] })
+
+      const previousSessions = queryClient.getQueryData<FocusSession[]>(['sessions'])
+
+      // Optimistic update
+      queryClient.setQueryData<FocusSession[]>(['sessions'], (old = []) =>
+        old.map((session) => {
+          if (session.id === sessionId) {
+            const endTime = new Date()
+            const duration = endTime.getTime() - session.startTime.getTime()
+            return {
+              ...session,
+              endTime,
+              duration,
+              isCompleted,
+            }
           }
-        }
-        return session
-      })
-    )
+          return session
+        })
+      )
+
+      return { previousSessions }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['sessions'], context.previousSessions)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+    },
+  })
+
+  // Session 삭제
+  const deleteMutation = useMutation({
+    mutationFn: deleteSessionAction,
+    onMutate: async (sessionId) => {
+      await queryClient.cancelQueries({ queryKey: ['sessions'] })
+
+      const previousSessions = queryClient.getQueryData<FocusSession[]>(['sessions'])
+
+      // Optimistic update
+      queryClient.setQueryData<FocusSession[]>(['sessions'], (old = []) =>
+        old.filter((session) => session.id !== sessionId)
+      )
+
+      return { previousSessions }
+    },
+    onError: (err, sessionId, context) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['sessions'], context.previousSessions)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+    },
+  })
+
+  // 편의 함수들
+  const startSession = async (
+    taskId: string,
+    taskTitle: string,
+    mode: TimerMode,
+    targetDuration?: number
+  ): Promise<FocusSession> => {
+    return createMutation.mutateAsync({ taskId, taskTitle, mode, targetDuration })
   }
 
-  // FocusSession 삭제
+  const endSession = (sessionId: string, isCompleted: boolean = false) => {
+    return endMutation.mutateAsync({ sessionId, isCompleted })
+  }
+
   const deleteSession = (sessionId: string) => {
-    setSessions(prev => prev.filter(session => session.id !== sessionId))
+    return deleteMutation.mutateAsync(sessionId)
   }
 
-  // 특정 기간의 세션 조회
+  // 쿼리 함수들
   const getSessionsByDateRange = (startDate: Date, endDate: Date): FocusSession[] => {
-    return sessions.filter(session => {
+    return sessions.filter((session) => {
       const sessionDate = session.startTime
       return sessionDate >= startDate && sessionDate <= endDate
     })
   }
 
-  // 특정 날짜의 세션 조회
   const getSessionsByDate = (date: Date): FocusSession[] => {
-    return sessions.filter(session => {
+    return sessions.filter((session) => {
       const sessionDate = session.startTime
       return (
         sessionDate.getDate() === date.getDate() &&
@@ -114,26 +181,24 @@ export function useFocusSessions() {
     })
   }
 
-  // 오늘의 세션 조회
   const getTodaySessions = (): FocusSession[] => {
     return getSessionsByDate(new Date())
   }
 
-  // LocalStorage 초기화
-  const resetSessions = () => {
-    setSessions([])
-    localStorage.removeItem(STORAGE_KEY)
-  }
-
   return {
     sessions,
-    isLoaded,
+    isLoading,
+    error,
+    isLoaded: !isLoading,
+    isPending:
+      createMutation.isPending ||
+      endMutation.isPending ||
+      deleteMutation.isPending,
     startSession,
     endSession,
     deleteSession,
     getSessionsByDateRange,
     getSessionsByDate,
     getTodaySessions,
-    resetSessions,
   }
 }

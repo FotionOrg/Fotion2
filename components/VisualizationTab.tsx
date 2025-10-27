@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { VisualizationView, FocusSession } from '@/types'
 import { useState } from 'react'
 import HourlyView from './views/HourlyView'
@@ -11,7 +12,7 @@ interface VisualizationTabProps {
   onStartFocus: () => void
 }
 
-export default function VisualizationTab({
+function VisualizationTab({
   sessions,
   onStartFocus,
 }: VisualizationTabProps) {
@@ -139,3 +140,5 @@ function GridIcon() {
     </svg>
   )
 }
+
+export default memo(VisualizationTab)

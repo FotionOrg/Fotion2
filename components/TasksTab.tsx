@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Task } from '@/types'
 
 interface TasksTabProps {
@@ -7,7 +8,7 @@ interface TasksTabProps {
   onCreateTask: () => void
 }
 
-export default function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
+function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
   // 날짜/시간이 지정된 작업 (정렬: 날짜 > 시간)
   const scheduledTasks = tasks
     .filter(task => task.scheduledDate || task.scheduledTime)
@@ -28,13 +29,16 @@ export default function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
       return 0
     })
 
-  // 날짜/시간이 없는 작업 (미분류)
-  const unscheduledTasks = tasks.filter(task => !task.scheduledDate && !task.scheduledTime)
+  // 날짜/시간이 없는 외부 연동 작업 (미분류 - Backlog)
+  // 내부(internal) 작업은 제외, 외부 소스(notion, linear, todoist 등)만 표시
+  const unscheduledTasks = tasks.filter(
+    task => !task.scheduledDate && !task.scheduledTime && task.source !== 'internal'
+  )
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col md:flex-row h-full">
       {/* 좌측: 캘린더 + 시간대별 작업 */}
-      <div className="flex-1 border-r border-zinc-200 dark:border-zinc-800 overflow-auto">
+      <div className="flex-1 md:border-r border-zinc-200 dark:border-zinc-800 overflow-auto">
         <div className="p-4">
           <h2 className="text-lg font-semibold mb-4">예정된 작업</h2>
 
@@ -65,8 +69,8 @@ export default function TasksTab({ tasks, onCreateTask }: TasksTabProps) {
         </div>
       </div>
 
-      {/* 우측: 미분류 작업 (Backlog) */}
-      <div className="w-96 overflow-auto bg-surface dark:bg-surface">
+      {/* 우측: 미분류 작업 (Backlog) - 모바일에서는 하단, PC에서는 우측 */}
+      <div className="w-full md:w-96 border-t md:border-t-0 border-zinc-200 dark:border-zinc-800 overflow-auto bg-surface dark:bg-surface">
         <div className="p-4">
           <h2 className="text-lg font-semibold mb-4">미분류 작업</h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
@@ -177,3 +181,4 @@ function TaskCard({ task, showDateTime = false }: TaskCardProps) {
     </div>
   )
 }
+export default memo(TasksTab)

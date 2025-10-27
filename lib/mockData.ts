@@ -1,4 +1,4 @@
-import { Task } from '@/types'
+import { Task, FocusSession } from '@/types'
 
 /**
  * 샘플 Task 데이터 (할 일 목록)
@@ -109,9 +109,23 @@ export const mockTasks: Task[] = [
     updatedAt: new Date(),
   },
 
-  // 미분류 작업들 (날짜/시간 없음 - Backlog)
+  // 내부 작업 (날짜/시간 없음) - 미분류에 표시되지 않음
   {
     id: '8',
+    title: '블로그 포스트 작성',
+    content: 'Next.js App Router 마이그레이션 경험 공유',
+    status: 'todo',
+    priority: 'low',
+    source: 'internal',
+    estimatedDuration: 180,
+    tags: ['블로그', '작성'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+
+  // 미분류 작업들 (외부 연동 - 날짜/시간 없음 - Backlog에 표시)
+  {
+    id: '9',
     title: 'UI 컴포넌트 리팩토링',
     content: '공통 컴포넌트 추출 및 재사용성 개선',
     status: 'todo',
@@ -123,7 +137,7 @@ export const mockTasks: Task[] = [
     updatedAt: new Date(),
   },
   {
-    id: '9',
+    id: '10',
     title: '성능 최적화 연구',
     content: 'React 렌더링 최적화 방법 조사',
     status: 'todo',
@@ -131,18 +145,6 @@ export const mockTasks: Task[] = [
     source: 'notion',
     estimatedDuration: 120,
     tags: ['연구', '성능'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '10',
-    title: '블로그 포스트 작성',
-    content: 'Next.js App Router 마이그레이션 경험 공유',
-    status: 'todo',
-    priority: 'low',
-    source: 'internal',
-    estimatedDuration: 180,
-    tags: ['블로그', '작성'],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -182,6 +184,18 @@ export const mockTasks: Task[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  {
+    id: '14',
+    title: '접근성 개선 작업',
+    content: 'ARIA 레이블 추가 및 키보드 네비게이션 개선',
+    status: 'todo',
+    priority: 'medium',
+    source: 'linear',
+    estimatedDuration: 150,
+    tags: ['접근성', 'a11y'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ]
 
 // 헬퍼 함수들
@@ -195,6 +209,161 @@ function getDateInFuture(days: number): Date {
   const future = new Date()
   future.setDate(future.getDate() + days)
   return future
+}
+
+/**
+ * 샘플 FocusSession 데이터 (집중 모드 기록)
+ * - 오늘과 최근 며칠간의 집중 세션 기록
+ */
+export const mockFocusSessions: FocusSession[] = [
+  // 오늘 완료된 세션들
+  {
+    id: 'session-1',
+    taskId: '1',
+    taskTitle: '주간 스탠드업 미팅',
+    startTime: getTodayTime(9, 0),
+    endTime: getTodayTime(9, 32),
+    duration: 32 * 60 * 1000, // 32분
+    isCompleted: true,
+    mode: 'timer',
+    targetDuration: 30 * 60 * 1000, // 30분 목표
+  },
+  {
+    id: 'session-2',
+    taskId: '2',
+    taskTitle: '디자인 시스템 구축',
+    startTime: getTodayTime(10, 30),
+    endTime: getTodayTime(12, 15),
+    duration: 105 * 60 * 1000, // 1시간 45분
+    isCompleted: false, // 타이머 완료 전에 종료
+    mode: 'timer',
+    targetDuration: 120 * 60 * 1000, // 2시간 목표
+  },
+  {
+    id: 'session-3',
+    taskId: '3',
+    taskTitle: 'API 엔드포인트 개발',
+    startTime: getTodayTime(14, 0),
+    endTime: getTodayTime(16, 45),
+    duration: 165 * 60 * 1000, // 2시간 45분
+    isCompleted: false,
+    mode: 'stopwatch', // 스톱워치 모드
+  },
+
+  // 어제 완료된 세션들
+  {
+    id: 'session-4',
+    taskId: '2',
+    taskTitle: '디자인 시스템 구축',
+    startTime: getYesterdayTime(9, 30),
+    endTime: getYesterdayTime(11, 0),
+    duration: 90 * 60 * 1000, // 1시간 30분
+    isCompleted: true,
+    mode: 'timer',
+    targetDuration: 90 * 60 * 1000,
+  },
+  {
+    id: 'session-5',
+    taskId: '4',
+    taskTitle: '코드 리뷰 - PR #145',
+    startTime: getYesterdayTime(14, 0),
+    endTime: getYesterdayTime(14, 47),
+    duration: 47 * 60 * 1000, // 47분
+    isCompleted: true,
+    mode: 'timer',
+    targetDuration: 45 * 60 * 1000,
+  },
+  {
+    id: 'session-6',
+    taskId: '9',
+    taskTitle: 'UI 컴포넌트 리팩토링',
+    startTime: getYesterdayTime(15, 30),
+    endTime: getYesterdayTime(17, 45),
+    duration: 135 * 60 * 1000, // 2시간 15분
+    isCompleted: false,
+    mode: 'stopwatch',
+  },
+
+  // 2일 전 세션들
+  {
+    id: 'session-7',
+    taskId: '1',
+    taskTitle: '주간 스탠드업 미팅',
+    startTime: getDaysAgoTime(2, 9, 0),
+    endTime: getDaysAgoTime(2, 9, 28),
+    duration: 28 * 60 * 1000, // 28분
+    isCompleted: false,
+    mode: 'timer',
+    targetDuration: 30 * 60 * 1000,
+  },
+  {
+    id: 'session-8',
+    taskId: '10',
+    taskTitle: '성능 최적화 연구',
+    startTime: getDaysAgoTime(2, 10, 30),
+    endTime: getDaysAgoTime(2, 12, 15),
+    duration: 105 * 60 * 1000, // 1시간 45분
+    isCompleted: true,
+    mode: 'timer',
+    targetDuration: 120 * 60 * 1000,
+  },
+
+  // 3일 전 세션들
+  {
+    id: 'session-9',
+    taskId: '13',
+    taskTitle: '테스트 커버리지 개선',
+    startTime: getDaysAgoTime(3, 14, 0),
+    endTime: getDaysAgoTime(3, 16, 30),
+    duration: 150 * 60 * 1000, // 2시간 30분
+    isCompleted: false,
+    mode: 'stopwatch',
+  },
+  {
+    id: 'session-10',
+    taskId: '12',
+    taskTitle: '디자인 토큰 정리',
+    startTime: getDaysAgoTime(3, 16, 45),
+    endTime: getDaysAgoTime(3, 18, 15),
+    duration: 90 * 60 * 1000, // 1시간 30분
+    isCompleted: true,
+    mode: 'timer',
+    targetDuration: 90 * 60 * 1000,
+  },
+
+  // 일주일 전 세션
+  {
+    id: 'session-11',
+    taskId: '3',
+    taskTitle: 'API 엔드포인트 개발',
+    startTime: getDaysAgoTime(7, 10, 0),
+    endTime: getDaysAgoTime(7, 12, 50),
+    duration: 170 * 60 * 1000, // 2시간 50분
+    isCompleted: false,
+    mode: 'timer',
+    targetDuration: 180 * 60 * 1000,
+  },
+]
+
+// 시간 헬퍼 함수들
+function getTodayTime(hours: number, minutes: number): Date {
+  const date = new Date()
+  date.setHours(hours, minutes, 0, 0)
+  return date
+}
+
+function getYesterdayTime(hours: number, minutes: number): Date {
+  const date = new Date()
+  date.setDate(date.getDate() - 1)
+  date.setHours(hours, minutes, 0, 0)
+  return date
+}
+
+function getDaysAgoTime(daysAgo: number, hours: number, minutes: number): Date {
+  const date = new Date()
+  date.setDate(date.getDate() - daysAgo)
+  date.setHours(hours, minutes, 0, 0)
+  return date
 }
 
 // 하위 호환성을 위해 mockTasks를 mockWeeklyTasks로도 export
