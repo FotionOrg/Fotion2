@@ -8,6 +8,7 @@ interface BrowserTabBarProps {
   activeTabId: string;
   onTabChange: (tabId: string) => void;
   onTabClose: (tabId: string) => void;
+  onShowShortcuts?: () => void;
 }
 
 export default function BrowserTabBar({
@@ -15,6 +16,7 @@ export default function BrowserTabBar({
   activeTabId,
   onTabChange,
   onTabClose,
+  onShowShortcuts,
 }: BrowserTabBarProps) {
   const handleCloseClick = (e: React.MouseEvent, tabId: string) => {
     e.stopPropagation();
@@ -110,6 +112,31 @@ export default function BrowserTabBar({
           );
         })}
       </div>
+
+      {/* 단축키 도움말 버튼 - 오른쪽 끝 */}
+      {onShowShortcuts && (
+        <div className="absolute right-4 top-0 bottom-0 flex items-center z-10">
+          <button
+            onClick={onShowShortcuts}
+            className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors group"
+            title="키보드 단축키 (Shift + ?)"
+          >
+            <svg
+              className="w-5 h-5 text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

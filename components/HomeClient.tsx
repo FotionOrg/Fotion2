@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { AppTab, Task, TimerMode, TimerState, FocusSession } from '@/types'
 import BrowserTabBar from '@/components/BrowserTabBar'
 import VisualizationTab from '@/components/VisualizationTab'
@@ -8,8 +8,10 @@ import TasksTab from '@/components/TasksTab'
 import FocusModeModal from '@/components/FocusModeModal'
 import FocusModeTab from '@/components/FocusModeTab'
 import CreateTaskModal from '@/components/CreateTaskModal'
+import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import { useTasks } from '@/hooks/useTasks'
 import { useFocusSessions } from '@/hooks/useFocusSessions'
+import { useKeyboardShortcuts, KeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
 
 // 초기 고정 탭
 const initialTabs: AppTab[] = [
@@ -35,6 +37,7 @@ export default function HomeClient() {
   const [activeTabId, setActiveTabId] = useState('visualization')
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false)
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const [fullscreenTabId, setFullscreenTabId] = useState<string | null>(null)
 
   // 활성 탭 가져오기
@@ -216,6 +219,100 @@ export default function HomeClient() {
     return () => clearInterval(interval)
   }, [])
 
+  // 키보드 단축키 정의
+  const shortcuts = useMemo<KeyboardShortcut[]>(() => [
+    // 일반
+    {
+      key: '?',
+      shift: true,
+      description: '단축키 도움말 보기',
+      category: '일반',
+      action: () => setIsShortcutsModalOpen(true),
+    },
+    // 탭 전환
+    {
+      key: '1',
+      ctrl: true,
+      description: '시각화 탭으로 이동',
+      category: '탭 이동',
+      action: () => setActiveTabId('visualization'),
+    },
+    {
+      key: '2',
+      ctrl: true,
+      description: '작업 관리 탭으로 이동',
+      category: '탭 이동',
+      action: () => setActiveTabId('tasks'),
+    },
+    {
+      key: '[',
+      ctrl: true,
+      description: '이전 탭',
+      category: '탭 이동',
+      action: () => {
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1
+        setActiveTabId(tabs[prevIndex].id)
+      },
+    },
+    {
+      key: ']',
+      ctrl: true,
+      description: '다음 탭',
+      category: '탭 이동',
+      action: () => {
+        const currentIndex = tabs.findIndex(t => t.id === activeTabId)
+        const nextIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0
+        setActiveTabId(tabs[nextIndex].id)
+      },
+    },
+    {
+      key: 'w',
+      ctrl: true,
+      description: '현재 탭 닫기',
+      category: '탭 이동',
+      action: () => {
+        if (activeTab && !activeTab.isPinned) {
+          handleTabClose(activeTabId)
+        }
+      },
+    },
+    // 작업 관리
+    {
+      key: 'n',
+      ctrl: true,
+      description: '새 작업 만들기',
+      category: '작업 관리',
+      action: () => setIsCreateTaskModalOpen(true),
+    },
+    {
+      key: 'f',
+      ctrl: true,
+      description: '집중 모드 시작',
+      category: '집중 모드',
+      action: () => setIsFocusModalOpen(true),
+    },
+    {
+      key: 'Escape',
+      description: '모달 닫기 / 전체화면 종료',
+      category: '일반',
+      action: () => {
+        if (fullscreenTabId) {
+          handleToggleFullscreen(fullscreenTabId)
+        } else if (isFocusModalOpen) {
+          setIsFocusModalOpen(false)
+        } else if (isCreateTaskModalOpen) {
+          setIsCreateTaskModalOpen(false)
+        } else if (isShortcutsModalOpen) {
+          setIsShortcutsModalOpen(false)
+        }
+      },
+    },
+  ], [tabs, activeTabId, activeTab, fullscreenTabId, isFocusModalOpen, isCreateTaskModalOpen, isShortcutsModalOpen])
+
+  // 키보드 단축키 등록
+  useKeyboardShortcuts(shortcuts)
+
   // 로딩 중일 때 표시
   if (!isLoaded) {
     return (
@@ -234,6 +331,7 @@ export default function HomeClient() {
           activeTabId={activeTabId}
           onTabChange={setActiveTabId}
           onTabClose={handleTabClose}
+          onShowShortcuts={() => setIsShortcutsModalOpen(true)}
         />
       )}
 
@@ -273,6 +371,13 @@ export default function HomeClient() {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         onCreate={handleTaskCreate}
+      />
+
+      {/* 키보드 단축키 도움말 모달 */}
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+        shortcuts={shortcuts}
       />
     </div>
   )

@@ -6,7 +6,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'completed'
   priority?: 'low' | 'medium' | 'high'
   tags?: string[]
-  source: 'internal' | 'notion' | 'todoist' | 'linear' // 작업 출처
+  source: 'internal' | 'notion' | 'todoist' | 'linear' | 'google-calendar' // 작업 출처
   estimatedDuration?: number // 예상 소요 시간 (분)
 
   // 일정 (외부 연동에서 가져올 수 있음)
