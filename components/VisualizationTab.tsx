@@ -1,22 +1,19 @@
-'use client'
+"use client";
 
-import { memo } from 'react'
-import { VisualizationView, FocusSession } from '@/types'
-import { useState } from 'react'
-import HourlyView from './views/HourlyView'
-import WeeklyView from './views/WeeklyView'
-import MonthlyView from './views/MonthlyView'
+import { memo } from "react";
+import { VisualizationView, FocusSession } from "@/types";
+import { useState } from "react";
+import HourlyView from "./views/HourlyView";
+import WeeklyView from "./views/WeeklyView";
+import MonthlyView from "./views/MonthlyView";
 
 interface VisualizationTabProps {
-  sessions: FocusSession[]
-  onStartFocus: () => void
+  sessions: FocusSession[];
+  onStartFocus: () => void;
 }
 
-function VisualizationTab({
-  sessions,
-  onStartFocus,
-}: VisualizationTabProps) {
-  const [currentView, setCurrentView] = useState<VisualizationView>('hourly')
+function VisualizationTab({ sessions, onStartFocus }: VisualizationTabProps) {
+  const [currentView, setCurrentView] = useState<VisualizationView>("hourly");
 
   return (
     <div className="flex flex-col h-full">
@@ -25,20 +22,20 @@ function VisualizationTab({
         <div className="max-w-screen-xl mx-auto">
           <div className="flex md:justify-start justify-stretch w-full md:w-auto">
             <ViewSwitchButton
-              active={currentView === 'hourly'}
-              onClick={() => setCurrentView('hourly')}
+              active={currentView === "hourly"}
+              onClick={() => setCurrentView("hourly")}
               title="시간별"
               icon={<ClockIcon />}
             />
             <ViewSwitchButton
-              active={currentView === 'daily'}
-              onClick={() => setCurrentView('daily')}
+              active={currentView === "daily"}
+              onClick={() => setCurrentView("daily")}
               title="주간"
               icon={<CalendarIcon />}
             />
             <ViewSwitchButton
-              active={currentView === 'monthly'}
-              onClick={() => setCurrentView('monthly')}
+              active={currentView === "monthly"}
+              onClick={() => setCurrentView("monthly")}
               title="월별"
               icon={<GridIcon />}
             />
@@ -48,9 +45,9 @@ function VisualizationTab({
 
       {/* 뷰 내용 */}
       <div className="flex-1 overflow-auto p-4">
-        {currentView === 'hourly' && <HourlyView sessions={sessions} />}
-        {currentView === 'daily' && <WeeklyView sessions={sessions} />}
-        {currentView === 'monthly' && <MonthlyView sessions={sessions} />}
+        {currentView === "hourly" && <HourlyView sessions={sessions} />}
+        {currentView === "daily" && <WeeklyView sessions={sessions} />}
+        {currentView === "monthly" && <MonthlyView sessions={sessions} />}
       </div>
 
       {/* 집중 시작 FAB */}
@@ -69,42 +66,52 @@ function VisualizationTab({
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            d="M12 4v16m8-8H4"
           />
         </svg>
       </button>
     </div>
-  )
+  );
 }
 
 // 뷰 전환 버튼 컴포넌트
 interface ViewSwitchButtonProps {
-  active: boolean
-  onClick: () => void
-  title: string
-  icon: React.ReactNode
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  icon: React.ReactNode;
 }
 
-function ViewSwitchButton({ active, onClick, title, icon }: ViewSwitchButtonProps) {
+function ViewSwitchButton({
+  active,
+  onClick,
+  title,
+  icon,
+}: ViewSwitchButtonProps) {
   return (
     <button
       onClick={onClick}
       className={`flex-1 md:flex-none md:w-24 py-3 flex items-center justify-center transition-colors ${
         active
-          ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+          ? "text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400"
+          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
       }`}
       title={title}
     >
       {icon}
     </button>
-  )
+  );
 }
 
 // 아이콘 컴포넌트들
 function ClockIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -112,12 +119,17 @@ function ClockIcon() {
         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
-  )
+  );
 }
 
 function CalendarIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -125,12 +137,17 @@ function CalendarIcon() {
         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
       />
     </svg>
-  )
+  );
 }
 
 function GridIcon() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -138,7 +155,7 @@ function GridIcon() {
         d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
       />
     </svg>
-  )
+  );
 }
 
-export default memo(VisualizationTab)
+export default memo(VisualizationTab);

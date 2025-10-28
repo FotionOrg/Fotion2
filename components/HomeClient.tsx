@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { AppTab, Task, TimerMode, TimerState, FocusSession } from '@/types'
+import Sidebar from '@/components/Sidebar'
 import BrowserTabBar from '@/components/BrowserTabBar'
 import VisualizationTab from '@/components/VisualizationTab'
 import TasksTab from '@/components/TasksTab'
@@ -13,28 +14,16 @@ import { useTasks } from '@/hooks/useTasks'
 import { useFocusSessions } from '@/hooks/useFocusSessions'
 import { useKeyboardShortcuts, KeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
 
-// 초기 고정 탭
-const initialTabs: AppTab[] = [
-  {
-    id: 'visualization',
-    type: 'visualization',
-    title: '시각화',
-    isPinned: true,
-  },
-  {
-    id: 'tasks',
-    type: 'tasks',
-    title: '작업 관리',
-    isPinned: true,
-  },
-]
+// 초기 탭 없음 (사이드바에서 선택하여 열기)
+const initialTabs: AppTab[] = []
 
 export default function HomeClient() {
   const { tasks, addTask, isLoaded: tasksLoaded } = useTasks()
   const { sessions, startSession, endSession, isLoaded: sessionsLoaded } = useFocusSessions()
   const isLoaded = tasksLoaded && sessionsLoaded
   const [tabs, setTabs] = useState<AppTab[]>(initialTabs)
-  const [activeTabId, setActiveTabId] = useState('visualization')
+  const [activeTabId, setActiveTabId] = useState<string | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false)
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
@@ -42,6 +31,27 @@ export default function HomeClient() {
 
   // 활성 탭 가져오기
   const activeTab = tabs.find(tab => tab.id === activeTabId)
+
+  // 시각화/작업관리 탭 열기
+  const handleOpenTab = (tabType: 'visualization' | 'tasks') => {
+    // 이미 열려있는지 확인
+    const existingTab = tabs.find(t => t.type === tabType)
+
+    if (existingTab) {
+      // 이미 열려있으면 활성화만
+      setActiveTabId(existingTab.id)
+    } else {
+      // 새로 열기
+      const newTab: AppTab = {
+        id: tabType,
+        type: tabType,
+        title: tabType === 'visualization' ? '시각화' : '작업 관리',
+        isPinned: false,
+      }
+      setTabs([...tabs, newTab])
+      setActiveTabId(newTab.id)
+    }
+  }
 
   // 집중 시작 핸들러
   const handleStartFocus = () => {
@@ -91,7 +101,7 @@ export default function HomeClient() {
   // 탭 닫기
   const handleTabClose = (tabId: string) => {
     const tab = tabs.find(t => t.id === tabId)
-    if (!tab || tab.isPinned) return
+    if (!tab) return
 
     // 집중 모드 탭이고 타이머가 실행 중이면 확인
     if (tab.type === 'focus' && tab.timerState?.isRunning) {
@@ -114,9 +124,9 @@ export default function HomeClient() {
     const newTabs = tabs.filter(t => t.id !== tabId)
     setTabs(newTabs)
 
-    // 활성 탭이 닫히는 경우 첫 번째 탭으로 이동
+    // 활성 탭이 닫히는 경우 첫 번째 탭으로 이동 (없으면 null)
     if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0]?.id || 'visualization')
+      setActiveTabId(newTabs[0]?.id || null)
     }
   }
 
@@ -233,16 +243,16 @@ export default function HomeClient() {
     {
       key: '1',
       ctrl: true,
-      description: '시각화 탭으로 이동',
+      description: '시각화 탭 열기/이동',
       category: '탭 이동',
-      action: () => setActiveTabId('visualization'),
+      action: () => handleOpenTab('visualization'),
     },
     {
       key: '2',
       ctrl: true,
-      description: '작업 관리 탭으로 이동',
+      description: '작업 관리 탭 열기/이동',
       category: '탭 이동',
-      action: () => setActiveTabId('tasks'),
+      action: () => handleOpenTab('tasks'),
     },
     {
       key: '[',
@@ -272,7 +282,7 @@ export default function HomeClient() {
       description: '현재 탭 닫기',
       category: '탭 이동',
       action: () => {
-        if (activeTab && !activeTab.isPinned) {
+        if (activeTabId) {
           handleTabClose(activeTabId)
         }
       },
@@ -323,40 +333,90 @@ export default function HomeClient() {
   }
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      {/* 브라우저 탭 바 (전체화면이 아닐 때만 표시) */}
+    <div className="flex h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      {/* 좌측 사이드바 (전체화면이 아닐 때만 표시) */}
       {!fullscreenTabId && (
-        <BrowserTabBar
+        <Sidebar
           tabs={tabs}
           activeTabId={activeTabId}
+          onOpenTab={handleOpenTab}
           onTabChange={setActiveTabId}
-          onTabClose={handleTabClose}
           onShowShortcuts={() => setIsShortcutsModalOpen(true)}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* 메인 컨텐츠 */}
-      <main className={`flex-1 overflow-hidden ${fullscreenTabId ? '' : 'pt-12'}`}>
-        {activeTab?.type === 'visualization' && (
-          <VisualizationTab sessions={sessions} onStartFocus={handleStartFocus} />
+      {/* 메인 영역 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* 상단 바 (전체화면이 아닐 때만 표시) */}
+        {!fullscreenTabId && (
+          <div className="flex items-center bg-surface-secondary dark:bg-surface border-b border-zinc-200 dark:border-zinc-800">
+            {/* 모바일 햄버거 메뉴 */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="메뉴 열기"
+            >
+              <svg
+                className="w-6 h-6 text-zinc-700 dark:text-zinc-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+
+            {/* 탭 바 (탭이 있을 때만) */}
+            {tabs.length > 0 && (
+              <BrowserTabBar
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onTabChange={setActiveTabId}
+                onTabClose={handleTabClose}
+              />
+            )}
+          </div>
         )}
 
-        {activeTab?.type === 'tasks' && (
-          <TasksTab tasks={tasks} onCreateTask={handleCreateTask} />
-        )}
+        {/* 메인 컨텐츠 */}
+        <main className="flex-1 overflow-hidden">
+          {!activeTab && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-zinc-500 dark:text-zinc-400">
+                <p className="text-lg mb-2">좌측 메뉴에서 시각화 또는 작업 관리를 선택하세요</p>
+                <p className="text-sm">또는 <kbd className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded">Ctrl + 1</kbd> / <kbd className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded">Ctrl + 2</kbd>를 눌러보세요</p>
+              </div>
+            </div>
+          )}
 
-        {activeTab?.type === 'focus' && activeTab.timerState && (
-          <FocusModeTab
-            timerState={activeTab.timerState}
-            task={tasks.find(t => t.id === activeTab.taskId) || null}
-            onPause={() => handleTimerPause(activeTab.id)}
-            onResume={() => handleTimerResume(activeTab.id)}
-            onStop={() => handleTimerStop(activeTab.id)}
-            onToggleFullscreen={() => handleToggleFullscreen(activeTab.id)}
-            isFullscreen={fullscreenTabId === activeTab.id}
-          />
-        )}
-      </main>
+          {activeTab?.type === 'visualization' && (
+            <VisualizationTab sessions={sessions} onStartFocus={handleStartFocus} />
+          )}
+
+          {activeTab?.type === 'tasks' && (
+            <TasksTab tasks={tasks} onCreateTask={handleCreateTask} />
+          )}
+
+          {activeTab?.type === 'focus' && activeTab.timerState && (
+            <FocusModeTab
+              timerState={activeTab.timerState}
+              task={tasks.find(t => t.id === activeTab.taskId) || null}
+              onPause={() => handleTimerPause(activeTab.id)}
+              onResume={() => handleTimerResume(activeTab.id)}
+              onStop={() => handleTimerStop(activeTab.id)}
+              onToggleFullscreen={() => handleToggleFullscreen(activeTab.id)}
+              isFullscreen={fullscreenTabId === activeTab.id}
+            />
+          )}
+        </main>
+      </div>
 
       {/* 집중 모드 선택 모달 */}
       <FocusModeModal
