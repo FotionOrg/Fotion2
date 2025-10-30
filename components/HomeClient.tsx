@@ -5,13 +5,18 @@ import { AppTab, Task, TimerMode, TimerState, FocusSession } from '@/types'
 import Sidebar from '@/components/Sidebar'
 import BrowserTabBar from '@/components/BrowserTabBar'
 import VisualizationTab from '@/components/VisualizationTab'
-import TasksTab from '@/components/TasksTab'
+import TasksTabNew from '@/components/TasksTabNew'
+import StatisticsTab from '@/components/StatisticsTab'
+import SettingsTab from '@/components/SettingsTab'
 import FocusModeModal from '@/components/FocusModeModal'
 import FocusModeTab from '@/components/FocusModeTab'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
+import ConfirmModal from '@/components/ConfirmModal'
 import { useTasks } from '@/hooks/useTasks'
 import { useFocusSessions } from '@/hooks/useFocusSessions'
+import { useTaskQueue } from '@/hooks/useTaskQueue'
+import { useSettings } from '@/hooks/useSettings'
 import { useKeyboardShortcuts, KeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
 
 // 초기 탭 없음 (사이드바에서 선택하여 열기)
@@ -20,7 +25,9 @@ const initialTabs: AppTab[] = []
 export default function HomeClient() {
   const { tasks, addTask, isLoaded: tasksLoaded } = useTasks()
   const { sessions, startSession, endSession, isLoaded: sessionsLoaded } = useFocusSessions()
-  const isLoaded = tasksLoaded && sessionsLoaded
+  const { taskQueue, isLoaded: queueLoaded } = useTaskQueue()
+  const { settings, updateSettings, isLoaded: settingsLoaded } = useSettings()
+  const isLoaded = tasksLoaded && sessionsLoaded && queueLoaded && settingsLoaded
   const [tabs, setTabs] = useState<AppTab[]>(initialTabs)
   const [activeTabId, setActiveTabId] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -29,11 +36,25 @@ export default function HomeClient() {
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false)
   const [fullscreenTabId, setFullscreenTabId] = useState<string | null>(null)
 
+  // Confirm 모달 상태
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+    variant?: 'danger' | 'warning' | 'info'
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  })
+
   // 활성 탭 가져오기
   const activeTab = tabs.find(tab => tab.id === activeTabId)
 
-  // 시각화/작업관리 탭 열기
-  const handleOpenTab = (tabType: 'visualization' | 'tasks') => {
+  // 시각화/작업관리/통계/설정 탭 열기
+  const handleOpenTab = (tabType: 'visualization' | 'tasks' | 'statistics' | 'settings') => {
     // 이미 열려있는지 확인
     const existingTab = tabs.find(t => t.type === tabType)
 
@@ -42,10 +63,16 @@ export default function HomeClient() {
       setActiveTabId(existingTab.id)
     } else {
       // 새로 열기
+      const tabTitles = {
+        visualization: '시각화',
+        tasks: '작업 관리',
+        statistics: '통계',
+        settings: '설정',
+      }
       const newTab: AppTab = {
         id: tabType,
         type: tabType,
-        title: tabType === 'visualization' ? '시각화' : '작업 관리',
+        title: tabTitles[tabType],
         isPinned: false,
       }
       setTabs([...tabs, newTab])
@@ -103,30 +130,43 @@ export default function HomeClient() {
     const tab = tabs.find(t => t.id === tabId)
     if (!tab) return
 
-    // 집중 모드 탭이고 타이머가 실행 중이면 확인
-    if (tab.type === 'focus' && tab.timerState?.isRunning) {
-      if (!confirm('진행 중인 타이머를 종료하시겠습니까?')) {
-        return
+    // 탭 닫기 실행
+    const closeTab = () => {
+      // 집중 모드 탭인 경우 FocusSession 종료
+      if (tab.type === 'focus' && tab.timerState?.sessionId) {
+        // 타이머가 완료된 경우인지 확인
+        const isCompleted = !!(tab.timerState.mode === 'timer' &&
+          tab.timerState.duration &&
+          (Date.now() - tab.timerState.startTime) >= tab.timerState.duration)
+
+        endSession(tab.timerState.sessionId, isCompleted)
+      }
+
+      // 탭 제거
+      const newTabs = tabs.filter(t => t.id !== tabId)
+      setTabs(newTabs)
+
+      // 활성 탭이 닫히는 경우 첫 번째 탭으로 이동 (없으면 null)
+      if (activeTabId === tabId) {
+        setActiveTabId(newTabs[0]?.id || null)
       }
     }
 
-    // 집중 모드 탭인 경우 FocusSession 종료
-    if (tab.type === 'focus' && tab.timerState?.sessionId) {
-      // 타이머가 완료된 경우인지 확인
-      const isCompleted = !!(tab.timerState.mode === 'timer' &&
-        tab.timerState.duration &&
-        (Date.now() - tab.timerState.startTime) >= tab.timerState.duration)
-
-      endSession(tab.timerState.sessionId, isCompleted)
-    }
-
-    // 탭 제거
-    const newTabs = tabs.filter(t => t.id !== tabId)
-    setTabs(newTabs)
-
-    // 활성 탭이 닫히는 경우 첫 번째 탭으로 이동 (없으면 null)
-    if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0]?.id || null)
+    // 집중 모드 탭이고 타이머가 실행 중이면 확인 모달
+    if (tab.type === 'focus' && tab.timerState?.isRunning) {
+      setConfirmModal({
+        isOpen: true,
+        title: '타이머 종료',
+        message: '진행 중인 타이머를 종료하시겠습니까?\n저장되지 않은 진행 상황은 기록됩니다.',
+        onConfirm: () => {
+          closeTab()
+          setConfirmModal(prev => ({ ...prev, isOpen: false }))
+        },
+        variant: 'warning',
+      })
+    } else {
+      // 바로 닫기
+      closeTab()
     }
   }
 
@@ -253,6 +293,20 @@ export default function HomeClient() {
       description: '작업 관리 탭 열기/이동',
       category: '탭 이동',
       action: () => handleOpenTab('tasks'),
+    },
+    {
+      key: '3',
+      ctrl: true,
+      description: '통계 탭 열기/이동',
+      category: '탭 이동',
+      action: () => handleOpenTab('statistics'),
+    },
+    {
+      key: ',',
+      ctrl: true,
+      description: '설정 탭 열기/이동',
+      category: '탭 이동',
+      action: () => handleOpenTab('settings'),
     },
     {
       key: '[',
@@ -401,7 +455,15 @@ export default function HomeClient() {
           )}
 
           {activeTab?.type === 'tasks' && (
-            <TasksTab tasks={tasks} onCreateTask={handleCreateTask} />
+            <TasksTabNew tasks={tasks} onCreateTask={handleCreateTask} />
+          )}
+
+          {activeTab?.type === 'statistics' && (
+            <StatisticsTab sessions={sessions} />
+          )}
+
+          {activeTab?.type === 'settings' && (
+            <SettingsTab settings={settings} onUpdateSettings={updateSettings} />
           )}
 
           {activeTab?.type === 'focus' && activeTab.timerState && (
@@ -423,6 +485,8 @@ export default function HomeClient() {
         isOpen={isFocusModalOpen}
         onClose={() => setIsFocusModalOpen(false)}
         tasks={tasks}
+        queuedTaskIds={taskQueue}
+        defaultTimerDuration={settings.defaultTimerDuration}
         onStart={handleFocusStart}
       />
 
@@ -438,6 +502,16 @@ export default function HomeClient() {
         isOpen={isShortcutsModalOpen}
         onClose={() => setIsShortcutsModalOpen(false)}
         shortcuts={shortcuts}
+      />
+
+      {/* 확인 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        variant={confirmModal.variant}
       />
     </div>
   )

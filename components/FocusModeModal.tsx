@@ -7,53 +7,40 @@ interface FocusModeModalProps {
   isOpen: boolean
   onClose: () => void
   tasks: Task[]
+  queuedTaskIds: string[] // 작업 큐에 있는 task ID 목록
+  defaultTimerDuration: number // 기본 타이머 시간 (분)
   onStart: (taskId: string, mode: TimerMode, duration?: number) => void
 }
 
-const PRESET_DURATIONS = [
-  { label: '25분', value: 25 * 60 * 1000 },
-  { label: '50분', value: 50 * 60 * 1000 },
-]
-
-export default function FocusModeModal({ isOpen, onClose, tasks, onStart }: FocusModeModalProps) {
+export default function FocusModeModal({ isOpen, onClose, tasks, queuedTaskIds, defaultTimerDuration, onStart }: FocusModeModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [timerMode, setTimerMode] = useState<TimerMode>('timer')
-  const [customDuration, setCustomDuration] = useState(25)
-  const [selectedPreset, setSelectedPreset] = useState(0)
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('')
       setSelectedTask(null)
-      setTimerMode('timer')
-      setCustomDuration(25)
-      setSelectedPreset(0)
     }
   }, [isOpen])
 
   if (!isOpen) return null
 
-  const filteredTasks = tasks.filter(task =>
+  // 작업 큐에 있는 작업들만 표시
+  const queuedTasks = queuedTaskIds
+    .map(id => tasks.find(t => t.id === id))
+    .filter((t): t is Task => t !== undefined)
+
+  const filteredTasks = queuedTasks.filter(task =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const recentTasks = tasks.slice(0, 5) // 최근 5개 작업
 
   const handleStart = () => {
     if (!selectedTask) return
 
-    let duration: number | undefined
-    if (timerMode === 'timer') {
-      if (selectedPreset < PRESET_DURATIONS.length) {
-        duration = PRESET_DURATIONS[selectedPreset].value
-      } else {
-        duration = customDuration * 60 * 1000
-      }
-    }
-
-    onStart(selectedTask.id, timerMode, duration)
+    // 기본 타이머 모드로 시작 (설정에서 지정한 시간 사용)
+    const duration = defaultTimerDuration * 60 * 1000
+    onStart(selectedTask.id, 'timer', duration)
     onClose()
   }
 
@@ -100,8 +87,17 @@ export default function FocusModeModal({ isOpen, onClose, tasks, onStart }: Focu
           </div>
 
           {/* 작업 리스트 */}
-          <div className="space-y-2 max-h-48 overflow-auto">
-            {searchQuery ? (
+          <div className="space-y-2 max-h-80 overflow-auto">
+            {queuedTasks.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">
+                  작업 큐가 비어있습니다
+                </p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  작업 관리 탭에서 작업을 큐에 추가하세요
+                </p>
+              </div>
+            ) : searchQuery ? (
               filteredTasks.length > 0 ? (
                 filteredTasks.map(task => (
                   <TaskItem
@@ -118,8 +114,8 @@ export default function FocusModeModal({ isOpen, onClose, tasks, onStart }: Focu
               )
             ) : (
               <>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">최근 작업</p>
-                {recentTasks.map(task => (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">작업 큐</p>
+                {queuedTasks.map(task => (
                   <TaskItem
                     key={task.id}
                     task={task}
@@ -131,80 +127,18 @@ export default function FocusModeModal({ isOpen, onClose, tasks, onStart }: Focu
             )}
           </div>
 
-          {/* 타이머 모드 선택 */}
-          <div>
-            <label className="block text-sm font-medium mb-3">모드 선택</label>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setTimerMode('timer')}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
-                  timerMode === 'timer'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <div className="font-medium">타이머</div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">설정한 시간 측정</div>
-              </button>
-              <button
-                onClick={() => setTimerMode('stopwatch')}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
-                  timerMode === 'stopwatch'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <div className="font-medium">스톱워치</div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">무제한 측정</div>
-              </button>
+          {/* 타이머 시간 안내 */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-blue-600 dark:text-blue-400 font-medium">⏱️</span>
+              <span className="text-blue-700 dark:text-blue-300">
+                타이머: <strong>{defaultTimerDuration}분</strong>
+              </span>
             </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              설정 탭에서 기본 타이머 시간을 변경할 수 있습니다
+            </p>
           </div>
-
-          {/* 타이머 시간 설정 */}
-          {timerMode === 'timer' && (
-            <div>
-              <label className="block text-sm font-medium mb-3">시간 설정</label>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {PRESET_DURATIONS.map((preset, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedPreset(index)}
-                    className={`py-2 px-4 rounded-lg border-2 transition-all ${
-                      selectedPreset === index
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                        : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setSelectedPreset(PRESET_DURATIONS.length)}
-                  className={`py-2 px-4 rounded-lg border-2 transition-all ${
-                    selectedPreset === PRESET_DURATIONS.length
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                      : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                  }`}
-                >
-                  커스텀
-                </button>
-              </div>
-
-              {selectedPreset === PRESET_DURATIONS.length && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max="999"
-                    value={customDuration}
-                    onChange={(e) => setCustomDuration(parseInt(e.target.value) || 1)}
-                    className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400">분</span>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* 푸터 */}

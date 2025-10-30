@@ -63,10 +63,13 @@ export default function WeeklyView({ sessions }: WeeklyViewProps) {
   const goToCurrentWeek = () => setWeekOffset(0);
 
   return (
-    <div ref={containerRef} className="overflow-auto h-full relative max-w-7xl mx-auto px-4">
+    <div
+      ref={containerRef}
+      className="overflow-auto h-full relative max-w-7xl mx-auto px-4"
+    >
       {/* 헤더 + 주간 네비게이션 */}
       <div className="sticky top-0 bg-background dark:bg-background z-30 pb-2 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold">주간 일정</h2>
+        <h2 className="text-lg font-semibold"></h2>
         <div className="flex gap-1">
           <button
             onClick={goToCurrentWeek}
@@ -184,12 +187,16 @@ export default function WeeklyView({ sessions }: WeeklyViewProps) {
                     )}
 
                     {cellSessions.map((session) => {
-                      const durationMinutes = Math.round(session.duration / 60000);
+                      const durationMinutes = Math.round(
+                        session.duration / 60000
+                      );
                       return (
                         <div
                           key={session.id}
                           className="text-xs p-1 mb-1 rounded truncate bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700"
-                          title={`${session.taskTitle}${session.endTime ? ` (${durationMinutes}분)` : ''}`}
+                          title={`${session.taskTitle}${
+                            session.endTime ? ` (${durationMinutes}분)` : ""
+                          }`}
                         >
                           <span className="inline-block w-1.5 h-1.5 bg-primary-500 rounded-full mr-1" />
                           {session.taskTitle}

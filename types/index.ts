@@ -45,7 +45,7 @@ export interface FocusSession {
 }
 
 // 탭 관련 타입
-export type TabType = 'visualization' | 'tasks' | 'focus'
+export type TabType = 'visualization' | 'tasks' | 'statistics' | 'settings' | 'focus'
 
 export interface AppTab {
   id: string
@@ -60,6 +60,18 @@ export interface AppTab {
 
 export type VisualizationView = 'hourly' | 'daily' | 'monthly'
 
+// 설정 관련 타입
+export interface UserSettings {
+  // 타이머 설정
+  defaultTimerDuration: number // 기본 타이머 시간 (분)
+
+  // OAuth 설정
+  googleConnected: boolean
+  notionConnected: boolean
+  todoistConnected: boolean
+  linearConnected: boolean
+}
+
 // 앱 전역 상태
 export interface AppState {
   tabs: AppTab[]
@@ -67,4 +79,5 @@ export interface AppState {
   currentView: VisualizationView
   tasks: Task[]
   focusSessions: FocusSession[]
+  settings: UserSettings
 }

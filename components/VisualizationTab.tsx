@@ -3,9 +3,9 @@
 import { memo } from "react";
 import { VisualizationView, FocusSession } from "@/types";
 import { useState } from "react";
-import HourlyView from "./views/HourlyView";
-import WeeklyView from "./views/WeeklyView";
-import MonthlyView from "./views/MonthlyView";
+import HourlyViewCanvas from "./views/HourlyViewCanvas";
+import WeeklyViewCanvas from "./views/WeeklyViewCanvas";
+import SessionDetailModal from "./SessionDetailModal";
 
 interface VisualizationTabProps {
   sessions: FocusSession[];
@@ -14,6 +14,13 @@ interface VisualizationTabProps {
 
 function VisualizationTab({ sessions, onStartFocus }: VisualizationTabProps) {
   const [currentView, setCurrentView] = useState<VisualizationView>("hourly");
+  const [selectedSession, setSelectedSession] = useState<FocusSession | null>(null);
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+
+  const handleSessionClick = (session: FocusSession) => {
+    setSelectedSession(session);
+    setIsSessionModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -33,21 +40,18 @@ function VisualizationTab({ sessions, onStartFocus }: VisualizationTabProps) {
               title="주간"
               icon={<CalendarIcon />}
             />
-            <ViewSwitchButton
-              active={currentView === "monthly"}
-              onClick={() => setCurrentView("monthly")}
-              title="월별"
-              icon={<GridIcon />}
-            />
           </div>
         </div>
       </div>
 
       {/* 뷰 내용 */}
-      <div className="flex-1 overflow-auto p-4">
-        {currentView === "hourly" && <HourlyView sessions={sessions} />}
-        {currentView === "daily" && <WeeklyView sessions={sessions} />}
-        {currentView === "monthly" && <MonthlyView sessions={sessions} />}
+      <div className="flex-1 overflow-hidden">
+        {currentView === "hourly" && (
+          <HourlyViewCanvas sessions={sessions} onSessionClick={handleSessionClick} />
+        )}
+        {currentView === "daily" && (
+          <WeeklyViewCanvas sessions={sessions} onSessionClick={handleSessionClick} />
+        )}
       </div>
 
       {/* 집중 시작 FAB */}
@@ -70,6 +74,13 @@ function VisualizationTab({ sessions, onStartFocus }: VisualizationTabProps) {
           />
         </svg>
       </button>
+
+      {/* 세션 상세 모달 */}
+      <SessionDetailModal
+        isOpen={isSessionModalOpen}
+        onClose={() => setIsSessionModalOpen(false)}
+        session={selectedSession}
+      />
     </div>
   );
 }
@@ -135,24 +146,6 @@ function CalendarIcon() {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-      />
-    </svg>
-  );
-}
-
-function GridIcon() {
-  return (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
       />
     </svg>
   );

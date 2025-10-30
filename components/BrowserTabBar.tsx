@@ -21,6 +21,7 @@ export default function BrowserTabBar({
   };
 
   const getTabIcon = (type: AppTab["type"]) => {
+    console.log("탭 type :", type);
     switch (type) {
       case "visualization":
         return "🏠";
@@ -28,6 +29,8 @@ export default function BrowserTabBar({
         return "📋";
       case "focus":
         return "⏱️";
+      case "statistics":
+        return "📊";
       default:
         return "";
     }
